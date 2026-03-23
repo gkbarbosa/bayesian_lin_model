@@ -1,0 +1,53 @@
+# Bayesian linear model in log10 space with error in both x and y
+
+# data (in log10)
+x_obs = clumps_grouped['log_mass_gal'].values
+y_obs = clumps_grouped['log_mass_clumps_sum'].values
+
+# errors (in dex)
+x_err = clumps_grouped['log_mass_gal_err'].values
+y_err = clumps_grouped['log_mass_clumps_sum_err'].values
+
+N = len(x_obs)
+
+# empirical values used only to scale weakly informative priors
+x_mean = np.mean(x_obs)
+x_std = np.std(x_obs)
+
+with pm.Model() as model_log:
+
+    # priors
+    alpha = pm.Normal('alpha', mu=0.0, sigma=5.0)      # intercept
+    beta = pm.Normal('beta', mu=0.0, sigma=2.0)        # slope
+    sigma_int = pm.HalfNormal('sigma_int', sigma=1.0)  # intrinsic scatter
+        
+    # hyperpriors for the population distribution of the latent true x values
+    mu_x = pm.Normal("mu_x", mu=x_mean, sigma=2 * x_std)
+    sigma_x = pm.HalfNormal("sigma_x", sigma=x_std)
+    
+    # latent true preditor variable
+    x_true = pm.Normal('x_true', mu=mu_x, sigma=sigma_x, shape=N)
+
+    # x likelihood
+    x_model = pm.Normal('x_model', mu=x_true, sigma=x_err, observed=x_obs)
+
+    # linear predictor
+    mu = alpha + beta * x_true
+
+    # total scatter in y: intrinsic + observational
+    sigma_tot = pm.math.sqrt(sigma_int**2 + y_err**2)
+
+    # likelihood
+    y_model = pm.Normal('y_model', mu=mu, sigma=sigma_tot, observed=y_obs)
+
+    trace = pm.sample(
+        draws=1200,
+        tune=1200,
+        target_accept=0.95,
+        cores=4,
+        return_inferencedata=True
+    )
+
+print(az.summary(trace, var_names=['alpha', 'beta', 'sigma_int']))
+az.plot_trace(trace, var_names=['alpha', 'beta', 'sigma_int'])
+plt.show()
