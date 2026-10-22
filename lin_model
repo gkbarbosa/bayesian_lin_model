@@ -1,14 +1,18 @@
 import pymc as pm
+import numpy as np
+import arviz as az
+import matplotlib.pyplot as plt
+import pandas as pd
 
 # Bayesian linear model in log10 space with error in both x and y
 
 # data (in log10)
-x_obs = clumps_grouped['log_mass_gal'].values
-y_obs = clumps_grouped['log_mass_clumps_sum'].values
+x_obs = data['log_mass_gal'].values
+y_obs = data['log_mass_gc_sum'].values
 
 # errors (in dex)
-x_err = clumps_grouped['log_mass_gal_err'].values
-y_err = clumps_grouped['log_mass_clumps_sum_err'].values
+x_err = data['log_mass_gal_err'].values
+y_err = data['log_mass_gc_sum_err'].values
 
 N = len(x_obs)
 
