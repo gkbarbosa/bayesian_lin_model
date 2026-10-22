@@ -1,3 +1,5 @@
+import pymc as pm
+
 # Bayesian linear model in log10 space with error in both x and y
 
 # data (in log10)
